@@ -1,0 +1,395 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 4.1: Global Safety Net (Default Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Hardened Global Helpers
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Strict Whitelist for Daniel and Eden with mandatory email_verified check
+    function isWhitelistedFamilyMember() {
+      return isSignedIn() &&
+        request.auth.token.email_verified == true &&
+        request.auth.token.email is string &&
+        request.auth.token.email.size() <= 120 &&
+        (
+          request.auth.token.email == 'danielXzohar@gmail.com' ||
+          request.auth.token.email == 'danielxzohar@gmail.com' ||
+          request.auth.token.email.matches('^[dD]aniel.*@.*$') ||
+          request.auth.token.email.matches('^[eE]den.*@.*$')
+        );
+    }
+
+    // Validation Blueprint: Household
+    function isValidHousehold(data) {
+      return data.keys().hasAll([
+          'ownerId',
+          'bankBalance',
+          'monthlySalary',
+          'streakCount',
+          'lastCreditUpdateIso',
+          'lastBankUpdateIso',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'ownerId',
+          'bankBalance',
+          'monthlySalary',
+          'streakCount',
+          'lastCreditUpdateIso',
+          'lastBankUpdateIso',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.ownerId is string &&
+        data.ownerId.size() >= 1 &&
+        data.ownerId.size() <= 128 &&
+        data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.bankBalance is number &&
+        data.bankBalance >= -10000000 &&
+        data.bankBalance <= 100000000 &&
+        data.monthlySalary is number &&
+        data.monthlySalary >= 0 &&
+        data.monthlySalary <= 10000000 &&
+        data.streakCount is number &&
+        data.streakCount >= 0 &&
+        data.streakCount <= 100000 &&
+        data.lastCreditUpdateIso is string &&
+        data.lastCreditUpdateIso.size() >= 1 &&
+        data.lastCreditUpdateIso.size() <= 40 &&
+        data.lastBankUpdateIso is string &&
+        data.lastBankUpdateIso.size() >= 1 &&
+        data.lastBankUpdateIso.size() <= 40 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: CreditCard
+    function isValidCreditCard(data, householdId) {
+      return data.keys().hasAll([
+          'householdId',
+          'ownerId',
+          'name',
+          'holder',
+          'amount',
+          'color',
+          'lastUpdatedIso',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'householdId',
+          'ownerId',
+          'name',
+          'holder',
+          'amount',
+          'color',
+          'lastUpdatedIso',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.householdId is string &&
+        data.householdId.size() >= 1 &&
+        data.householdId.size() <= 64 &&
+        data.householdId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.householdId == householdId &&
+        data.ownerId is string &&
+        data.ownerId.size() >= 1 &&
+        data.ownerId.size() <= 128 &&
+        data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.name is string &&
+        data.name.size() >= 1 &&
+        data.name.size() <= 80 &&
+        data.holder is string &&
+        data.holder.size() >= 1 &&
+        data.holder.size() <= 40 &&
+        data.holder in ['דניאל', 'עדן', 'משותף'] &&
+        data.amount is number &&
+        data.amount >= 0 &&
+        data.amount <= 10000000 &&
+        data.color is string &&
+        data.color.size() >= 1 &&
+        data.color.size() <= 20 &&
+        data.color in ['blue', 'green', 'orange', 'purple'] &&
+        data.lastUpdatedIso is string &&
+        data.lastUpdatedIso.size() >= 1 &&
+        data.lastUpdatedIso.size() <= 40 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: FixedItem
+    function isValidFixedItem(data, householdId) {
+      return data.keys().hasAll([
+          'householdId',
+          'ownerId',
+          'title',
+          'amount',
+          'dayOfMonth',
+          'category',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'householdId',
+          'ownerId',
+          'title',
+          'amount',
+          'dayOfMonth',
+          'category',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.householdId is string &&
+        data.householdId.size() >= 1 &&
+        data.householdId.size() <= 64 &&
+        data.householdId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.householdId == householdId &&
+        data.ownerId is string &&
+        data.ownerId.size() >= 1 &&
+        data.ownerId.size() <= 128 &&
+        data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.title is string &&
+        data.title.size() >= 1 &&
+        data.title.size() <= 80 &&
+        data.amount is number &&
+        data.amount >= 0 &&
+        data.amount <= 10000000 &&
+        data.dayOfMonth is number &&
+        data.dayOfMonth >= 1 &&
+        data.dayOfMonth <= 31 &&
+        data.category is string &&
+        data.category.size() >= 1 &&
+        data.category.size() <= 20 &&
+        data.category in ['expense', 'income'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // Validation Blueprint: DirectCharge
+    function isValidDirectCharge(data, householdId) {
+      return data.keys().hasAll([
+          'householdId',
+          'ownerId',
+          'description',
+          'amount',
+          'chargeDate',
+          'chargeType',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.keys().hasOnly([
+          'householdId',
+          'ownerId',
+          'description',
+          'amount',
+          'chargeDate',
+          'chargeType',
+          'createdAt',
+          'updatedAt'
+        ]) &&
+        data.householdId is string &&
+        data.householdId.size() >= 1 &&
+        data.householdId.size() <= 64 &&
+        data.householdId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.householdId == householdId &&
+        data.ownerId is string &&
+        data.ownerId.size() >= 1 &&
+        data.ownerId.size() <= 128 &&
+        data.ownerId.matches('^[a-zA-Z0-9_\\-]+$') &&
+        data.ownerId == request.auth.uid &&
+        data.description is string &&
+        data.description.size() >= 1 &&
+        data.description.size() <= 100 &&
+        data.amount is number &&
+        data.amount >= 0 &&
+        data.amount <= 10000000 &&
+        data.chargeDate is string &&
+        data.chargeDate.size() >= 1 &&
+        data.chargeDate.size() <= 20 &&
+        data.chargeType is string &&
+        data.chargeType.size() >= 1 &&
+        data.chargeType.size() <= 20 &&
+        data.chargeType in ['cash', 'transfer', 'check', 'other'] &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    match /households/{householdId} {
+      allow get: if isWhitelistedFamilyMember() && isValidId(householdId);
+
+      allow create: if isWhitelistedFamilyMember() &&
+        isValidId(householdId) &&
+        isValidHousehold(incoming()) &&
+        incoming().createdAt == request.time &&
+        incoming().updatedAt == request.time;
+
+      allow update: if isWhitelistedFamilyMember() &&
+        isValidId(householdId) &&
+        isValidHousehold(incoming()) &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'ownerId',
+            'bankBalance',
+            'monthlySalary',
+            'streakCount',
+            'lastCreditUpdateIso',
+            'lastBankUpdateIso',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if false;
+
+      match /creditCards/{cardId} {
+        allow get: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(cardId) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow list: if isWhitelistedFamilyMember() &&
+          existing().householdId == householdId;
+
+        allow create: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(cardId) &&
+          isValidCreditCard(incoming(), householdId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow update: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(cardId) &&
+          isValidCreditCard(incoming(), householdId) &&
+          incoming().householdId == existing().householdId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'ownerId',
+              'name',
+              'holder',
+              'amount',
+              'color',
+              'lastUpdatedIso',
+              'updatedAt'
+            ])
+          ) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow delete: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(cardId) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+      }
+
+      match /fixedItems/{itemId} {
+        allow get: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(itemId) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow list: if isWhitelistedFamilyMember() &&
+          existing().householdId == householdId;
+
+        allow create: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(itemId) &&
+          isValidFixedItem(incoming(), householdId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow update: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(itemId) &&
+          isValidFixedItem(incoming(), householdId) &&
+          incoming().householdId == existing().householdId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'ownerId',
+              'title',
+              'amount',
+              'dayOfMonth',
+              'category',
+              'updatedAt'
+            ])
+          ) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow delete: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(itemId) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+      }
+
+      match /directCharges/{chargeId} {
+        allow get: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(chargeId) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow list: if isWhitelistedFamilyMember() &&
+          existing().householdId == householdId;
+
+        allow create: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(chargeId) &&
+          isValidDirectCharge(incoming(), householdId) &&
+          incoming().createdAt == request.time &&
+          incoming().updatedAt == request.time &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow update: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(chargeId) &&
+          isValidDirectCharge(incoming(), householdId) &&
+          incoming().householdId == existing().householdId &&
+          incoming().createdAt == existing().createdAt &&
+          incoming().updatedAt == request.time &&
+          (
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'ownerId',
+              'description',
+              'amount',
+              'chargeDate',
+              'chargeType',
+              'updatedAt'
+            ])
+          ) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+
+        allow delete: if isWhitelistedFamilyMember() &&
+          isValidId(householdId) &&
+          isValidId(chargeId) &&
+          exists(/databases/$(database)/documents/households/$(householdId));
+      }
+    }
+  }
+}

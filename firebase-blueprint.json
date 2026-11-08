@@ -1,0 +1,278 @@
+{
+  "entities": {
+    "Household": {
+      "title": "Household",
+      "description": "Main household budget state for Daniel and Eden",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the last updating family member",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "bankBalance": {
+          "type": "number",
+          "description": "Current checking account balance in ILS"
+        },
+        "monthlySalary": {
+          "type": "number",
+          "description": "Monthly salary entering on the 1st of the month in ILS"
+        },
+        "streakCount": {
+          "type": "number",
+          "description": "Consecutive 5-day on-time credit update streak counter"
+        },
+        "lastCreditUpdateIso": {
+          "type": "string",
+          "description": "ISO timestamp of the most recent credit card update",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "lastBankUpdateIso": {
+          "type": "string",
+          "description": "ISO timestamp of the most recent bank balance update",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "ownerId",
+        "bankBalance",
+        "monthlySalary",
+        "streakCount",
+        "lastCreditUpdateIso",
+        "lastBankUpdateIso",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "CreditCard": {
+      "title": "CreditCard",
+      "description": "Variable credit card expense source for Daniel or Eden",
+      "type": "object",
+      "properties": {
+        "householdId": {
+          "type": "string",
+          "description": "Parent household ID",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the family member who updated the card",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Credit card display name",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "holder": {
+          "type": "string",
+          "description": "Family member card holder",
+          "enum": ["דניאל", "עדן", "משותף"],
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "amount": {
+          "type": "number",
+          "description": "Accumulated expected charge in ILS"
+        },
+        "color": {
+          "type": "string",
+          "description": "Card visual theme color",
+          "enum": ["blue", "green", "orange", "purple"],
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "lastUpdatedIso": {
+          "type": "string",
+          "description": "ISO date when this card amount was last updated",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "householdId",
+        "ownerId",
+        "name",
+        "holder",
+        "amount",
+        "color",
+        "lastUpdatedIso",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "FixedItem": {
+      "title": "FixedItem",
+      "description": "Fixed monthly checking account expense or income",
+      "type": "object",
+      "properties": {
+        "householdId": {
+          "type": "string",
+          "description": "Parent household ID",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of creator",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the fixed item (e.g. גן, משכנתא, הלוואה)",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "amount": {
+          "type": "number",
+          "description": "Amount in ILS"
+        },
+        "dayOfMonth": {
+          "type": "number",
+          "description": "Day of month (1-31) when the item is charged or credited"
+        },
+        "category": {
+          "type": "string",
+          "description": "Whether this item is a fixed expense or fixed income",
+          "enum": ["expense", "income"],
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "householdId",
+        "ownerId",
+        "title",
+        "amount",
+        "dayOfMonth",
+        "category",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "DirectCharge": {
+      "title": "DirectCharge",
+      "description": "Additional direct charge from checking account outside credit cards",
+      "type": "object",
+      "properties": {
+        "householdId": {
+          "type": "string",
+          "description": "Parent household ID",
+          "minLength": 1,
+          "maxLength": 64,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Firebase Auth UID of creator",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "description": {
+          "type": "string",
+          "description": "Description of the direct charge (cash, bank transfer, check)",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "amount": {
+          "type": "number",
+          "description": "Charge amount in ILS"
+        },
+        "chargeDate": {
+          "type": "string",
+          "description": "Scheduled or actual charge date (YYYY-MM-DD)",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "chargeType": {
+          "type": "string",
+          "description": "Type of direct bank charge",
+          "enum": ["cash", "transfer", "check", "other"],
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation server timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last update server timestamp"
+        }
+      },
+      "required": [
+        "householdId",
+        "ownerId",
+        "description",
+        "amount",
+        "chargeDate",
+        "chargeType",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/households/{householdId}": {
+      "schema": { "$ref": "#/entities/Household" },
+      "description": "Main household budget state shared by Daniel and Eden"
+    },
+    "/households/{householdId}/creditCards/{cardId}": {
+      "schema": { "$ref": "#/entities/CreditCard" },
+      "description": "Credit cards belonging to the household"
+    },
+    "/households/{householdId}/fixedItems/{itemId}": {
+      "schema": { "$ref": "#/entities/FixedItem" },
+      "description": "Fixed monthly expenses and incomes belonging to the household"
+    },
+    "/households/{householdId}/directCharges/{chargeId}": {
+      "schema": { "$ref": "#/entities/DirectCharge" },
+      "description": "Direct bank account charges outside credit cards"
+    }
+  }
+}

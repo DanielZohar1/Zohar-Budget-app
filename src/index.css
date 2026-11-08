@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --duo-green: #58CC02;
+    --duo-green-dark: #46A302;
+    --duo-blue: #1CB0F6;
+    --duo-blue-dark: #1899D6;
+    --duo-orange: #FF9600;
+    --duo-orange-dark: #CC7800;
+    --duo-red: #FF4B4B;
+    --duo-red-dark: #EA2B2B;
+    --duo-bg: #F7F7F7;
+  }
+
+  html {
+    font-family: 'Rubik', system-ui, -apple-system, sans-serif;
+    direction: rtl;
+    background-color: #F7F7F7;
+    color: #1E293B;
+  }
+
+  body {
+    margin: 0;
+    background-color: #F7F7F7;
+    color: #1E293B;
+    overflow-x: hidden;
+  }
+}
+
+.font-num {
+  font-family: 'JetBrains Mono', 'Rubik', monospace;
+  font-variant-numeric: tabular-nums;
+}
